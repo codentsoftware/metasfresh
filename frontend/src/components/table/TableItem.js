@@ -8,8 +8,9 @@ import {
   VIEW_EDITOR_RENDER_MODES_ALWAYS,
   VIEW_EDITOR_RENDER_MODES_ON_DEMAND,
 } from '../../constants/Constants';
+import { shouldRenderColumn, getIconClassName } from '../../utils/tableHelpers';
+
 import TableCell from './TableCell';
-import { shouldRenderColumn, getSizeClass } from '../../utils/tableHelpers';
 import WithMobileDoubleTap from '../WithMobileDoubleTap';
 
 class TableItem extends PureComponent {
@@ -339,6 +340,51 @@ class TableItem extends PureComponent {
     return [{}];
   };
 
+  updateRow = () => {
+    this.setState(
+      {
+        updatedRow: true,
+      },
+      () => {
+        setTimeout(() => {
+          this.setState({
+            updatedRow: false,
+          });
+        }, 1000);
+      }
+    );
+  };
+
+  nestedSelect = (elem, cb) => {
+    let res = [];
+
+    elem &&
+      elem.map((item) => {
+        res = res.concat([item.id]);
+
+        if (item.includedDocuments) {
+          res = res.concat(this.nestedSelect(item.includedDocuments));
+        } else {
+          cb && cb();
+        }
+      });
+
+    return res;
+  };
+
+  handleIndentSelect = (e) => {
+    const { handleSelect, rowId, includedDocuments } = this.props;
+
+    e.stopPropagation();
+    handleSelect(this.nestedSelect(includedDocuments).concat([rowId]));
+  };
+
+  handleRowCollapse = () => {
+    const { item, collapsed, onRowCollapse } = this.props;
+
+    onRowCollapse(item, collapsed);
+  };
+
   renderCells = () => {
     const {
       cols,
@@ -360,7 +406,6 @@ class TableItem extends PureComponent {
       isGerman,
       isSelected,
       focusOnFieldName,
-      activeLocale,
     } = this.props;
     const {
       edited,
@@ -405,8 +450,6 @@ class TableItem extends PureComponent {
             return (
               <TableCell
                 {...{
-                  activeLocale,
-                  getSizeClass,
                   entity,
                   windowId,
                   docId,
@@ -462,69 +505,6 @@ class TableItem extends PureComponent {
           }
         })
       );
-    }
-  };
-
-  updateRow = () => {
-    this.setState(
-      {
-        updatedRow: true,
-      },
-      () => {
-        setTimeout(() => {
-          this.setState({
-            updatedRow: false,
-          });
-        }, 1000);
-      }
-    );
-  };
-
-  nestedSelect = (elem, cb) => {
-    let res = [];
-
-    elem &&
-      elem.map((item) => {
-        res = res.concat([item.id]);
-
-        if (item.includedDocuments) {
-          res = res.concat(this.nestedSelect(item.includedDocuments));
-        } else {
-          cb && cb();
-        }
-      });
-
-    return res;
-  };
-
-  handleIndentSelect = (e) => {
-    const { handleSelect, rowId, includedDocuments } = this.props;
-
-    e.stopPropagation();
-    handleSelect(this.nestedSelect(includedDocuments).concat([rowId]));
-  };
-
-  handleRowCollapse = () => {
-    const { item, collapsed, onRowCollapse } = this.props;
-
-    onRowCollapse(item, collapsed);
-  };
-
-  getIconClassName = (huType) => {
-    switch (huType) {
-      case 'LU':
-        return 'meta-icon-pallete';
-      case 'TU':
-        return 'meta-icon-package';
-      case 'CU':
-        return 'meta-icon-product';
-      case 'PP_Order_Receive':
-        return 'meta-icon-receipt';
-      case 'PP_Order_Issue':
-        return 'meta-icon-issue';
-      case 'M_Picking_Slot':
-        // https://github.com/metasfresh/metasfresh/issues/2298
-        return 'meta-icon-beschaffung';
     }
   };
 
@@ -584,7 +564,7 @@ class TableItem extends PureComponent {
           ''
         )}
         <div className="indent-icon" onClick={this.handleIndentSelect}>
-          <i className={this.getIconClassName(huType)} />
+          <i className={getIconClassName(huType)} />
         </div>
       </div>
     );
@@ -674,7 +654,6 @@ TableItem.propTypes = {
   keyProperty: PropTypes.string,
   page: PropTypes.number,
   activeSort: PropTypes.bool,
-  activeLocale: PropTypes.object,
 };
 
 export default TableItem;
