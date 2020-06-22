@@ -325,7 +325,6 @@ export default class Table extends PureComponent {
       onRightClick,
       rowRefs,
     } = this.props;
-    const activeLocale = { key: getCurrentActiveLocale() };
 
     if (!rows.length || !columns.length) {
       return null;
@@ -348,7 +347,6 @@ export default class Table extends PureComponent {
         {...{
           page,
           entity,
-          activeLocale,
           windowId,
           mainTable,
           indentSupported,
