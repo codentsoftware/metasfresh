@@ -149,13 +149,12 @@ class Modal extends Component {
       parentSelection,
       parentWindowId,
       isAdvanced,
-      modalViewId,
+      viewId,
       modalViewDocumentIds,
       activeTabId,
       childViewId,
       childViewSelectedIds,
       parentViewId,
-      parentViewSelectedIds,
     } = this.props;
     let request = null;
 
@@ -209,33 +208,34 @@ class Modal extends Component {
         try {
           const options = {
             processType: windowId,
-            viewId: modalViewId,
+            viewId: viewId,
             type: parentWindowId,
-            ids: modalViewId
+            ids: viewId
               ? modalViewDocumentIds
               : dataId
               ? [dataId]
               : parentSelection,
             tabId,
-            rowId: rowId || parentSelection[0],
+            rowId:
+              rowId || (parentSelection.length ? parentSelection[0] : null),
           };
 
-          if (activeTabId && parentSelection) {
+          if (activeTabId && parentSelection.length) {
             options.selectedTab = {
               tabId: activeTabId,
               rowIds: parentSelection,
             };
           }
 
+          // TODO: Is this ever used on the backend ?
           if (childViewId) {
             options.childViewId = childViewId;
             options.childViewSelectedIds = childViewSelectedIds;
           }
 
-          // TODO: I think this is never provided - Kuba
-          if (parentViewId) {
+          if (parentViewId && parentSelection.length) {
             options.parentViewId = parentViewId;
-            options.parentViewSelectedIds = parentViewSelectedIds;
+            options.parentViewSelectedIds = parentSelection;
           }
 
           await dispatch(createProcess(options));
@@ -462,7 +462,13 @@ class Modal extends Component {
    * @summary ToDo: Describe the method
    */
   renderPanel = () => {
-    const { modalTitle, modalType, isDocumentNotSaved, layout } = this.props;
+    const {
+      modalTitle,
+      modalType,
+      isDocumentNotSaved,
+      layout,
+      indicator,
+    } = this.props;
     const { scrolled, pending, isNewDoc, isTooltipShow } = this.state;
 
     const applyHandler =
@@ -568,7 +574,7 @@ class Modal extends Component {
             </div>
           </div>
 
-          <Indicator isDocumentNotSaved={isDocumentNotSaved} />
+          <Indicator {...{ isDocumentNotSaved, indicator }} />
 
           <div
             className="panel-modal-content js-panel-modal-content
@@ -692,18 +698,15 @@ class Modal extends Component {
  * @prop {bool} [isAdvanced]
  * @prop {bool} [isDocumentNotSaved]
  * @prop {bool} [isNewDoc]
- * @prop {string} [staticModalType]
+ * @prop {string} [modalType]
  * @prop {*} [modalTitle]
- * @prop {*} [modalType]
  * @prop {*} [modalSaveStatus]
- * @prop {*} [modalViewId]
  * @prop {*} [modalViewDocumentIds]
  * @prop {string} [staticModalType]
  * @prop {string} [tabId]
  * @prop {*} [parentSelection]
  * @prop {*} [parentWindowId]
  * @prop {*} [parentViewId]
- * @prop {*} [parentViewSelectedIds]
  * @prop {*} [rawModalVisible]
  * @prop {string} [rowId]
  * @prop {*} [triggerField]
@@ -717,6 +720,7 @@ Modal.propTypes = {
   activeTabId: PropTypes.any,
   childViewId: PropTypes.any,
   closeCallback: PropTypes.any,
+  // TODO: Is this ever used on the backend ?
   childViewSelectedIds: PropTypes.any,
   data: PropTypes.oneOfType([PropTypes.shape(), PropTypes.array]), // TODO: type here should point to a hidden issue?
   dataId: PropTypes.string,
@@ -727,14 +731,12 @@ Modal.propTypes = {
   modalTitle: PropTypes.any,
   modalType: PropTypes.any,
   modalSaveStatus: PropTypes.any,
-  modalViewId: PropTypes.any,
   modalViewDocumentIds: PropTypes.any,
   tabId: PropTypes.any,
   parentDataId: PropTypes.any,
   parentSelection: PropTypes.any,
   parentWindowId: PropTypes.any,
   parentViewId: PropTypes.any,
-  parentViewSelectedIds: PropTypes.any,
   rawModalVisible: PropTypes.any,
   rowId: PropTypes.string,
   triggerField: PropTypes.any,
@@ -751,9 +753,12 @@ const mapStateToProps = (state, props) => {
     docId: dataId,
   });
 
+  const parentSelector = getSelection();
+
   return {
-    parentSelection: getSelection(state, parentViewTableId),
+    parentSelection: parentSelector(state, parentViewTableId),
     activeTabId: state.windowHandler.master.layout.activeTab,
+    indicator: state.windowHandler.indicator,
   };
 };
 
