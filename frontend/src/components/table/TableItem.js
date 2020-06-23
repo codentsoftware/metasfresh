@@ -246,17 +246,6 @@ class TableItem extends PureComponent {
     changeListenOnFalse();
   };
 
-  /*
-   * This function is called when cell's value changes
-   *
-   * TODO: Do we still need to call `onItemChange` ?
-   */
-  handleCellValueChange = (rowId, property, value) => {
-    const { onItemChange } = this.props;
-
-    onItemChange(rowId, property, value);
-  };
-
   handleClick = (e) => {
     const { onClick, item } = this.props;
 
@@ -390,6 +379,12 @@ class TableItem extends PureComponent {
       isGerman,
       isSelected,
       focusOnFieldName,
+      /*
+       * This function is called when cell's value changes
+       *
+       * TODO: Do we still need to call `onItemChange` ?
+       */
+      onItemChange,
     } = this.props;
     const {
       edited,
@@ -467,7 +462,7 @@ class TableItem extends PureComponent {
                 isEdited={isEdited}
                 handleDoubleClick={this.handleEditProperty}
                 onClickOutside={this.handleClickOutside}
-                onCellChange={this.handleCellValueChange}
+                onCellChange={onItemChange}
                 updatedRow={updatedRow || newRow}
                 updateRow={this.updateRow}
                 handleKeyDown={this.handleKeyDown}
